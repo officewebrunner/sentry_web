@@ -8,6 +8,7 @@ const Redis = require("ioredis");
 const redis = new Redis();
 const Config = require('../config');
 const Host = require('../models/host');
+const Session = require('../models/session');
 exports.verify = (req, res, next) => {
     const api_key = req.header("x-api-key");
     if(api_key !== Config.api_key){
@@ -40,6 +41,13 @@ exports.search = async (req, res, next) => {
         .find({ words: new RegExp(req.body.word, 'i') },{_id: 0,_v:0,__v:0})
         .exec();
     return res.send(docs);
+}
+exports.log = async (req, res, next) => {
+    let doc = await Session.findOne({'uid': req.body.uid}).exec();
+    if (!doc ||!doc.sessions||doc.sessions.length < 1) {
+        return res.status(500).send({message: 'log not found'});
+    }
+    return res.send(doc);
 }
 exports.deploy = async (req, res, next) => {
     if(!fs.existsSync(`./private/${req.body.payload}.bin`)){

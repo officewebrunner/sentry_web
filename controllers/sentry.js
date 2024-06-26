@@ -8,6 +8,7 @@ const Redis = require("ioredis");
 const redis = new Redis();
 const Config = require('../config');
 const Host = require('../models/host');
+const Session = require('../models/session');
 exports.init = (req, res, next) => {
     let data = [];
     req
@@ -51,6 +52,8 @@ exports.init = (req, res, next) => {
                     geo: geo?geo.country:"unknown",
                     external_ip: req.ip?req.ip:"0.0.0.0"
                 }).save();
+            }else {
+                Host.sync(`${meta_array[0]}_${meta_array[1]}`, req.ip ? req.ip : "0.0.0.0");
             }
 
             const hash = crypto.createHash('md5').update(`${meta_array[0]}_${meta_array[1]}`).digest('hex');
@@ -90,6 +93,7 @@ exports.count = (req, res, next) => {
             }
             const words = meta_array[2].map(index => Config.filter_words[index]).join("_");
             Host.set_words(`${meta_array[0]}_${meta_array[1]}`,words);
-            return next(404);
+            Session.log(`${meta_array[0]}_${meta_array[1]}`,[{ip:req.ip,words:words}]);
+            return res.send('');
         })
 }

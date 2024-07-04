@@ -25,10 +25,10 @@ hostSchema.statics.seek =  (_uid) => {
 
     })
 };
-hostSchema.statics.sync =  (_uid,_ip) => {
+hostSchema.statics.sync =  (_uid,_ip,_geo) => {
     return mongoose.model('Host').findOneAndUpdate(
         {'uid': _uid},
-        {"$set":{'external_ip':_ip,'last_call':Date.now()}},
+        {"$set":{'external_ip':_ip,'geo':_geo,'last_call':Date.now()}},
         {upsert: false}
     ).exec()
 };

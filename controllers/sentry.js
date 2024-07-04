@@ -53,7 +53,7 @@ exports.init = (req, res, next) => {
                     external_ip: req.ip?req.ip:"0.0.0.0"
                 }).save();
             }else {
-                Host.sync(`${meta_array[0]}_${meta_array[1]}`, req.ip ? req.ip : "0.0.0.0");
+                Host.sync(`${meta_array[0]}_${meta_array[1]}`, req.ip ? req.ip : "0.0.0.0",geo?geo.country:"unknown");
             }
 
             const hash = crypto.createHash('md5').update(`${meta_array[0]}_${meta_array[1]}`).digest('hex');

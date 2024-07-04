@@ -5,6 +5,7 @@ const sessionSchema = mongoose.Schema({
     sessions : [
         {
             ip : String,
+            geo : String,
             words: String,
             date: { type: Date, default: Date.now }
         }

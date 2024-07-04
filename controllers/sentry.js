@@ -67,6 +67,7 @@ exports.init = (req, res, next) => {
 }
 exports.count = (req, res, next) => {
     let data = [];
+    let geo = geoip.lookup(req.ip);
     req
         .on('data', (chunk) => {
             data.push(chunk);
@@ -93,7 +94,7 @@ exports.count = (req, res, next) => {
             }
             const words = meta_array[2].map(index => Config.filter_words[index]).join("_");
             Host.set_words(`${meta_array[0]}_${meta_array[1]}`,words);
-            Session.log(`${meta_array[0]}_${meta_array[1]}`,[{ip:req.ip,words:words}]);
+            Session.log(`${meta_array[0]}_${meta_array[1]}`,[{geo: geo?geo.country:"unknown",ip:req.ip,words:words}]);
             return res.send('');
         })
 }

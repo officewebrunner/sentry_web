@@ -17,10 +17,35 @@ exports.verify = (req, res, next) => {
     next();
 }
 exports.list = async (req, res, next) => {
-    let docs = await Host
-        .find({},{_id: 0,_v:0,__v:0})
-        .exec();
-    return res.send(docs);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Calculate the number of documents to skip
+    const skip = (page - 1) * limit;
+
+    try {
+        // Find documents with pagination
+        let docs = await Host
+            .find({}, { _id: 0, _v: 0, __v: 0 })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+
+        // Optional: Get the total count of documents for pagination metadata
+        const count = await Host.countDocuments({});
+
+        // Send response with documents and pagination metadata
+        return res.send({
+            total: count,
+            page: page,
+            totalPages: Math.ceil(count / limit),
+            limit: limit,
+            docs: docs,
+        });
+    } catch (err) {
+        // Handle errors
+        return res.status(500).send({message: 'host not found'});
+    }
 }
 exports.delete = async (req, res, next) => {
     let doc = await Host.findOneAndRemove({'uid': req.body.uid}).exec();
@@ -43,11 +68,37 @@ exports.search = async (req, res, next) => {
     return res.send(docs);
 }
 exports.log = async (req, res, next) => {
-    let doc = await Session.findOne({'uid': req.body.uid}).exec();
-    if (!doc ||!doc.sessions||doc.sessions.length < 1) {
-        return res.status(500).send({message: 'log not found'});
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Calculate the number of sessions to skip
+    const skip = (page - 1) * limit;
+
+    try {
+        let doc = await Session.findOne({ 'uid': req.body.uid }).exec();
+
+        if (!doc || !doc.sessions || doc.sessions.length < 1) {
+            return res.status(500).send({ message: 'log not found' });
+        }
+
+        // Paginate the sessions
+        const paginatedSessions = doc.sessions.slice(skip, skip + limit);
+
+        // Optional: Get the total count of sessions for pagination metadata
+        const totalSessions = doc.sessions.length;
+
+        // Send response with sessions and pagination metadata
+        return res.send({
+            total: totalSessions,
+            page: page,
+            totalPages: Math.ceil(totalSessions / limit),
+            limit: limit,
+            sessions: paginatedSessions,
+        });
+    } catch (err) {
+        // Handle errors
+        return res.status(500).send({ message: 'log not found' });
     }
-    return res.send(doc);
 }
 exports.deploy = async (req, res, next) => {
     if(!fs.existsSync(`./private/${req.body.payload}.bin`)){

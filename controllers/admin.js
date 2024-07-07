@@ -62,14 +62,41 @@ exports.note = async (req, res, next) => {
     return res.send(doc);
 }
 exports.search = async (req, res, next) => {
-    let docs = await Host
-        .find({ words: new RegExp(req.body.word, 'i') },{_id: 0,_v:0,__v:0})
-        .exec();
-    return res.send(docs);
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 10;
+
+    // Calculate the number of documents to skip
+    const skip = (page - 1) * limit;
+
+    try {
+        // Find documents with pagination and search criteria
+        let docs = await Host
+            .find({ words: new RegExp(req.body.word, 'i') }, { _id: 0, _v: 0, __v: 0 })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+
+        // Optional: Get the total count of documents for pagination metadata
+        const count = await Host.countDocuments({ words: new RegExp(req.body.word, 'i') });
+
+        // Send response with documents and pagination metadata
+        return res.send({
+            total: count,
+            page: page,
+            totalPages: Math.ceil(count / limit),
+            limit: limit,
+            docs: docs,
+        });
+    } catch (err) {
+        // Handle errors
+        return next(err);
+    }
+
 }
 exports.log = async (req, res, next) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    // Default values for page and limit in case they are not provided in the JSON body
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 10;
 
     // Calculate the number of sessions to skip
     const skip = (page - 1) * limit;

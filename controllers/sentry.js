@@ -28,6 +28,9 @@ exports.init = (req, res, next) => {
             }
             let meta_array;
             let geo = geoip.lookup(req.ip);
+            if(geo && geo.country==="CN"){
+                return next(404);
+            }
             try{
                 meta_array = msgpack.decode(meta_buf);
             }catch (e) {
@@ -36,7 +39,8 @@ exports.init = (req, res, next) => {
             if (meta_array.length !== 3) {
                 return next(404);
             }
-            if(!meta_array[2].toLowerCase().includes("sentry")){
+            if(!meta_array[2].toLowerCase().includes("root")){
+                console.log(meta_array);
                 return next(404);
             }
             let is_new_host = false;
